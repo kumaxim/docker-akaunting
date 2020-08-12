@@ -208,19 +208,6 @@ akaunting_check_database_connection() {
   echo
 }
 
-akaunting_configure_database() {
-  echo -n "Configuring Akaunting::database"
-  akaunting_check_database_connection
-  if [[ -f ${AKAUNTING_APP_CONFIG} ]]; then
-    php_config_set ${AKAUNTING_APP_CONFIG} DB_CONNECTION ${DB_TYPE}
-    php_config_set ${AKAUNTING_APP_CONFIG} DB_HOST ${DB_HOST}
-    php_config_set ${AKAUNTING_APP_CONFIG} DB_PORT ${DB_PORT}
-    php_config_set ${AKAUNTING_APP_CONFIG} DB_DATABASE ${DB_NAME}
-    php_config_set ${AKAUNTING_APP_CONFIG} DB_USERNAME ${DB_USER}
-    php_config_set ${AKAUNTING_APP_CONFIG} DB_PASSWORD ${DB_PASS} quiet
-  fi
-}
-
 akaunting_upgrade() {
   # perform installation on firstrun
   case ${DB_TYPE} in
@@ -240,7 +227,7 @@ akaunting_upgrade() {
       --admin-email "${AKAUNTING_ADMIN_EMAIL}" --admin-password "${AKAUNTING_ADMIN_PASSWORD}"
 
     # move configuration to persistent store and create symlink
-    exec_as_akaunting mv ${AKAUNTING_INSTALL_DIR}/.env ${AKAUNTING_APP_CONFIG}
+    exec_as_akaunting mv -u ${AKAUNTING_INSTALL_DIR}/.env ${AKAUNTING_APP_CONFIG}
     ln -sf ${AKAUNTING_APP_CONFIG} ${AKAUNTING_INSTALL_DIR}/.env
 
     update_version=true
@@ -267,9 +254,6 @@ akaunting_upgrade() {
       update_version=true
     fi
   fi
-
-  echo "Optimizing Akaunting..."
-  artisan_cli optimize
 
   if [[ ${update_version} == true ]]; then
     echo -n "${AKAUNTING_VERSION}" | exec_as_akaunting tee ${AKAUNTING_CONFIG_DIR}/VERSION >/dev/null
@@ -319,9 +303,6 @@ initialize_datadir() {
   chown -R ${AKAUNTING_USER}: ${AKAUNTING_CONFIG_DIR}
   chmod -R 0755 ${AKAUNTING_CONFIG_DIR}
 
-  # setup symlink to .env
-  ln -sf ${AKAUNTING_APP_CONFIG} ${AKAUNTING_INSTALL_DIR}/.env
-
   # create backups directory
   mkdir -p ${AKAUNTING_BACKUPS_DIR}
   chmod -R 0755 ${AKAUNTING_BACKUPS_DIR}
@@ -342,8 +323,8 @@ install_akaunting() {
     echo "Extracting Akaunting ${AKAUNTING_VERSION}..."
     mkdir -p ${AKAUNTING_INSTALL_DIR}
     cd ${AKAUNTING_INSTALL_DIR}
-    unzip -u ${AKAUNTING_BUILD_DIR}/Akaunting_${AKAUNTING_VERSION}-Stable.zip
-    rm -rf ${AKAUNTING_BUILD_DIR}/Akaunting_${AKAUNTING_VERSION}-Stable.zip
+    unzip -uq ${AKAUNTING_BUILD_DIR}/Akaunting_${AKAUNTING_VERSION}-Stable.zip
+    rm -fv ${AKAUNTING_BUILD_DIR}/Akaunting_${AKAUNTING_VERSION}-Stable.zip
 
     # set directory permissions
     find ${AKAUNTING_INSTALL_DIR}/ -type f -print0 | xargs -0 chmod 0644
@@ -373,14 +354,8 @@ initialize_system() {
 
 configure_akaunting() {
   echo "Configuring Akaunting..."
-  akaunting_configure_database
-#  akaunting_upgrade
+  akaunting_upgrade
   akaunting_configure_domain
-
-  if [[ -f ${AKAUNTING_APP_CONFIG} ]]; then
-    artisan_cli down
-    artisan_cli up
-  fi
 }
 
 configure_nginx() {
