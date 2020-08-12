@@ -6,7 +6,7 @@ volumes:
 
 services:
   mysql:
-    restart: always
+    restart: unless-stopped
     image: mysql:5.7
     environment:
         - MYSQL_USER=akaunting
@@ -17,7 +17,7 @@ services:
         - ./storage/mysql:/var/lib/mysql
 
   nginx:
-    restart: always
+    restart: unless-stopped
     image: nginx:1.19
     depends_on:
         - akaunting
@@ -28,7 +28,7 @@ services:
         - virtualhost:/etc/nginx/conf.d:ro
 
   akaunting:
-    restart: always
+    restart: unless-stopped
     image: kumaxim/akaunting:2.0.19
     build:
         context: ./compose-build/php
