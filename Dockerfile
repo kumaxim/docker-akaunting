@@ -1,7 +1,7 @@
 FROM php:7.4-fpm
 LABEL maintainer="kumaxim@users.noreply.github.com"
 
-ENV AKAUNTING_VERSION=2.0.22 \
+ENV AKAUNTING_VERSION=2.0.23 \
     AKAUNTING_USER=www-data \
     AKAUNTING_INSTALL_DIR=/var/www/akaunting \
     AKAUNTING_DATA_DIR=/var/lib/akaunting \
